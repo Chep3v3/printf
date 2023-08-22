@@ -1,63 +1,102 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-int _printf(const char *format, ...) {
+int _printf(const char *format, ...)
+{
     va_list args;
+    int i = 0, count = 0;
+    char *str;
+
     va_start(args, format);
 
-    int count = 0;  // To keep track of the number of characters printed
+    while (format && format[i])
+    {
+        if (format[i] == '%')
+        {
+            i++;
+            if (format[i] == '\0')
+                return (-1); // Incomplete format specifier
 
-    while (*format) {
-        if (*format == '%') {
-            format++;  // Move to the character after '%'
-            switch (*format) {
+            switch (format[i])
+            {
+                // Handle custom conversion specifiers
+                case 'b':
+                    count += printf_binary(va_arg(args, unsigned int));
+                    break;
+
+                case 'S':
+                    str = va_arg(args, char *);
+                    count += printf_custom_string(str);
+                    break;
+
+                case 'r':
+                    str = va_arg(args, char *);
+                    count += printf_reversed_string(str);
+                    break;
+
+                case 'R':
+                    str = va_arg(args, char *);
+                    count += printf_rot13_string(str);
+                    break;
+
+                // Handle other conversion specifiers
                 case 'c':
-                    {
-                        char c = va_arg(args, int); // Get the character argument
-                        putchar(c);  // Print the character
-                        count++;
-                    }
+                    count += printf_char(va_arg(args, int));
                     break;
+
                 case 's':
-                    {
-                        char *str = va_arg(args, char *); // Get the string argument
-                        while (*str) {
-                            putchar(*str);  // Print each character of the string
-                            str++;
-                            count++;
-                        }
-                    }
+                    str = va_arg(args, char *);
+                    count += printf_string(str);
                     break;
+
                 case '%':
-                    putchar('%');  // Print a '%' character
-                    count++;
+                    count += printf("%%");
                     break;
+
+                case 'd':
+                case 'i':
+                    count += printf_int(va_arg(args, int));
+                    break;
+
+                case 'u':
+                    count += printf_unsigned(va_arg(args, unsigned int));
+                    break;
+
+                case 'o':
+                    count += printf_octal(va_arg(args, unsigned int));
+                    break;
+
+                case 'x':
+                    count += printf_hex(va_arg(args, unsigned int), 0);
+                    break;
+
+                case 'X':
+                    count += printf_hex(va_arg(args, unsigned int), 1);
+                    break;
+
+                case 'p':
+                    count += printf_pointer(va_arg(args, void *));
+                    break;
+
                 default:
-                    putchar('%');    // Print the '%' character
-                    putchar(*format); // Print the character after '%'
+                    printf("%%");
+                    printf("%c", format[i]);
                     count += 2;
                     break;
             }
-        } else {
-            putchar(*format);  // Print non-format characters
+        }
+        else
+        {
+            printf("%c", format[i]);
             count++;
         }
-        format++;  // Move to the next character in the format string
+        i++;
     }
 
     va_end(args);
-    return count;
+
+    return (count);
 }
 
-int main() {
-    int num = 42;
-    char ch = 'A';
-    char *str = "Hello, World!";
-    
-    int count = _printf("This is a test: %c %s %%%d\n", ch, str, num);
-
-    printf("\nNumber of characters printed: %d\n", count);
-
-    return 0;
-}
+// Implement other printing functions as previously shown.
 
